@@ -8481,7 +8481,6 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
 
     RegionEventImpl event = new ClientRegionEventImpl(this, Operation.REGION_CLEAR, callbackArg,
         false, client.getDistributedMember(), client, eventId);
-
     basicClear(event, true);
   }
 
@@ -8675,7 +8674,12 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
   @Override
   void basicLocalClear(RegionEventImpl rEvent) {
     getDataView().checkSupportsRegionClear();
-    cmnClearRegion(rEvent, false/* cacheWrite */, false/* useRVV */);
+    final long startTime = startClear();
+    try {
+      cmnClearRegion(rEvent, false/* cacheWrite */, false/* useRVV */);
+    } finally {
+      endClear(startTime);
+    }
   }
 
   @Override
@@ -10919,6 +10923,15 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
       event.release();
     }
   }
+
+  public long startClear() {
+    return getCachePerfStats().startClear();
+  }
+
+  public void endClear(long startTime) {
+    getCachePerfStats().endClear(startTime);
+  }
+
 
   @Override
   public long getVersionForMember(VersionSource member) {
